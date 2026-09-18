@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { buildLogger } from './logging.js';
 import { registry, httpRequests } from './metrics.js';
 import { paymentRoutes } from './routes/payments.js';
+import { earningRoutes } from './routes/earnings.js';
 import { registerErrorHandler } from './errors.js';
 import { pingDb } from './db/client.js';
 
@@ -56,6 +57,7 @@ export function buildApp(): FastifyInstance {
 
   registerErrorHandler(app);
   void app.register(paymentRoutes);
+  void app.register(earningRoutes);
 
   return app;
 }

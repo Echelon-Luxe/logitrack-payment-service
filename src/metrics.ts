@@ -42,3 +42,22 @@ export const httpRequests = new Counter({
   labelNames: ['method', 'route', 'status'] as const,
   registers: [registry],
 });
+
+export const earningsAccrued = new Counter({
+  name: 'driver_earnings_accrued_total',
+  help: 'Earnings recorded when a shipment was picked up',
+  registers: [registry],
+});
+
+export const earningsSettled = new Counter({
+  name: 'driver_earnings_settled_total',
+  help: 'Earnings moved out of PENDING',
+  labelNames: ['status'] as const,
+  registers: [registry],
+});
+
+export const earningEventsDuplicate = new Counter({
+  name: 'driver_earning_events_duplicate_total',
+  help: 'Shipment events skipped because they had already been applied',
+  registers: [registry],
+});
