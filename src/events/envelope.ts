@@ -40,3 +40,23 @@ export function buildEnvelope<T>(args: {
 }
 
 export const PAYMENT_EVENTS_TOPIC = 'logitrack.payment.events';
+
+// Consumed, not produced: shipment-service owns this shape. Kept in step with
+// its envelope.ts - a field added there is invisible here until it is added
+// here too.
+export interface ShipmentEventPayload {
+  shipmentId: string;
+  reference: string;
+  status: string;
+  customerId: string;
+  driverId: string | null;
+  origin: string;
+  destination: string;
+}
+
+export const SHIPMENT_EVENTS_TOPIC = 'logitrack.shipment.events';
+export const SHIPMENT_EVENTS_DLQ = 'logitrack.shipment.events.dlq';
+
+// Its own group: payment-service must receive every shipment event
+// independently of driver-service, tracking-service and notification-service.
+export const CONSUMER_GROUP = 'logitrack-payment-service';

@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   // Pinned, not detected. The build stage (node:24-bookworm-slim) has no
   // openssl CLI, so Prisma cannot detect the platform and falls back to
   // debian-openssl-1.1.x - while the distroless runtime needs 3.0.x, and
@@ -21,18 +21,18 @@ enum PaymentStatus {
 }
 
 model Payment {
-  id          String        @id @default(uuid())
+  id String @id @default(uuid())
 
   // Our reference, sent to Paystack and echoed back on the webhook.
-  reference   String        @unique
+  reference String @unique
 
-  shipmentId  String
-  customerId  String
-  email       String
+  shipmentId String
+  customerId String
+  email      String
 
   // Kobo/cents. Never a float - 0.1 + 0.2 != 0.3 and money must be exact.
-  amount      Int
-  currency    String        @default("NGN")
+  amount   Int
+  currency String @default("NGN")
 
   status      PaymentStatus @default(PENDING)
   paystackId  String?
@@ -40,8 +40,8 @@ model Payment {
   paidAt      DateTime?
   failureText String?
 
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([shipmentId])
   @@index([customerId, createdAt])
@@ -67,4 +67,44 @@ model OutboxEvent {
   createdAt    DateTime  @default(now())
 
   @@index([publishedAt, createdAt])
+}
+
+// What a driver has earned for a shipment. Accrued when the shipment is picked
+// up so the driver can see it immediately, settled when it is delivered - paying
+// at pickup would move money before the work is done, and a transfer cannot be
+// pulled back if the shipment is later cancelled.
+enum EarningStatus {
+  PENDING
+  PAID
+  VOID
+}
+
+model Earning {
+  id String @id @default(uuid())
+
+  // One earning per shipment. The unique constraint is what makes the consumer
+  // idempotent on replay, not a check-then-insert.
+  shipmentId String @unique
+  driverId   String
+
+  // Kobo, like Payment.amount. Never a float.
+  amount   Int
+  currency String @default("NGN")
+
+  status EarningStatus @default(PENDING)
+  paidAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([driverId, status])
+  @@index([status, createdAt])
+}
+
+// Ledger for Kafka consumer idempotency, separate from ProcessedWebhook, which
+// tracks Paystack deliveries.
+model ProcessedEvent {
+  eventId   String   @id
+  eventType String
+  createdAt DateTime @default(now())
 }
